@@ -17,16 +17,18 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 public class UserServiceTests {
-    
+
     @InjectMocks
     private UserServiceImpl userService;
 
     @Mock
     private UserRepository userRepository;
-    
+
     @Mock
     private PhoneRepository phoneRepository;
 
@@ -34,42 +36,43 @@ public class UserServiceTests {
     private JwtBuilder jwtBuilder;
 
     @BeforeEach
-    public void init(){
+    public void init() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testAddUser(){
-        String email = "test@mail.com";
-        User user = getDummyUser(email);
+    public void testAddUser() {
+        final String email = "test@mail.com";
+        final User user = getDummyUser(email);
+        final UserJPA userJPA = getDummyUserJPA();
         Mockito.when(userRepository.findByEmail(email)).thenReturn(null);
-        UserJPA userJPA = new UserJPA();
-        userJPA.setUserId(1L);
         Mockito.when(userRepository.save(Mockito.any())).thenReturn(userJPA);
-        final UserResponse response=userService.addUser(user);
+        Mockito.when(jwtBuilder.createToken(Mockito.any())).thenReturn("dummy");
+        final UserResponse response = userService.addUser(user);
         Assertions.assertNotNull(response);
         Assertions.assertEquals(userJPA.getUserId(), response.getId());
     }
 
+
     @Test
-    public void testUsedEmail(){
+    public void testUsedEmail() {
         User user = new User();
-        String email = "test@mail.com";
+        String email = "test.used@mail.com";
         user.setEmail(email);
         user.setPassword("s1esV4lido");
         Mockito.when(userRepository.findByEmail(email)).thenReturn(List.of(new UserJPA()));
-        Assertions.assertThrows(UsedEmailException.class,() -> userService.addUser(user));
+        Assertions.assertThrows(UsedEmailException.class, () -> userService.addUser(user));
     }
 
     @Test
-    public void testNotValidPassword(){
+    public void testNotValidPassword() {
         User user = new User();
         user.setPassword("noesvalido");
-        Assertions.assertThrows(NotValidPasswordException.class,() -> userService.addUser(user));
+        Assertions.assertThrows(NotValidPasswordException.class, () -> userService.addUser(user));
     }
 
     private static User getDummyUser(String email) {
-        Phone phone=new Phone();
+        Phone phone = new Phone();
         phone.setNumber("98754321");
         phone.setCityCode("9");
         phone.setCountryCode("56");
@@ -78,5 +81,12 @@ public class UserServiceTests {
         user.setPassword("s1esV4lido");
         user.setPhones(List.of(phone));
         return user;
+    }
+
+    private static UserJPA getDummyUserJPA() {
+        UserJPA userJPA = new UserJPA();
+        userJPA.setUserId(UUID.randomUUID());
+        userJPA.setToken("dummy".getBytes(StandardCharsets.UTF_8));
+        return userJPA;
     }
 }

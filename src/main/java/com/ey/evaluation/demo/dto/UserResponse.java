@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 public class UserResponse {
 
-    private Long id;
+    private UUID id;
 
     private Date created;
 

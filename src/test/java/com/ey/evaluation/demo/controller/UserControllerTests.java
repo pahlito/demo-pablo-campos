@@ -18,10 +18,10 @@ public class UserControllerTests {
     @LocalServerPort
     private int port;
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Test
-    public void testAddUser(){
+    public void testAddUser() {
         final User user = getDummyUser("s1esV4lido");
         UserResponse response = restTemplate.postForObject(getUrl(), user, UserResponse.class);
         Assertions.assertNotNull(response);
@@ -30,14 +30,14 @@ public class UserControllerTests {
     }
 
     @Test
-    public void testBadRequestPassword(){
+    public void testBadRequestPassword() {
         final User user = getDummyUser("noesvalido");
         Assertions.assertThrows(HttpClientErrorException.BadRequest.class,
                 () -> restTemplate.postForObject(getUrl(), user, UserResponse.class));
     }
 
     @Test
-    public void testBadRequest(){
+    public void testBadRequest() {
         final User user = new User();
         Assertions.assertThrows(HttpClientErrorException.BadRequest.class,
                 () -> restTemplate.postForObject(getUrl(), user, UserResponse.class));
@@ -49,7 +49,7 @@ public class UserControllerTests {
 
 
     private static User getDummyUser(String password) {
-        Phone phone=new Phone();
+        Phone phone = new Phone();
         phone.setNumber("98754321");
         phone.setCityCode("9");
         phone.setCountryCode("56");

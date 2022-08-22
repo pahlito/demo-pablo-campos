@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
@@ -33,31 +33,34 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse addUser(User user) {
 
-        PasswordUtils.validatePassword(user.getPassword());
-        validateEmail(user.getEmail());
+        validateRequest(user);
 
-        final UserJPA entity = saveUserJPA(user);
-        addUserToken(entity);
-        savePhones(user.getPhones(), entity);
+        final UserJPA entity = persistUserInformation(user);
 
         return EntityUtils.buildResponse(entity);
     }
 
-    private UserJPA saveUserJPA(User user) {
-        return userRepository.save(EntityUtils.createUser(user));
-    }
-
-    private void addUserToken(UserJPA entity) {
-        final String token = jwtBuilder.createToken(entity);
-        entity.setToken(token);
-        entity.setModified(new Date());
-        userRepository.save(entity);
+    private void validateRequest(User user) {
+        PasswordUtils.validatePassword(user.getPassword());
+        validateEmail(user.getEmail().toLowerCase());
     }
 
     private void validateEmail(String email) {
         if (!CollectionUtils.isEmpty(userRepository.findByEmail(email))) {
             throw new UsedEmailException();
         }
+    }
+
+    private UserJPA persistUserInformation(User user) {
+        final UserJPA entity = saveUserJPA(user);
+        savePhones(user.getPhones(), entity);
+        return entity;
+    }
+
+    private UserJPA saveUserJPA(User user) {
+        UserJPA entity = EntityUtils.createUser(user);
+        entity.setToken(jwtBuilder.createToken(entity).getBytes(StandardCharsets.UTF_8));
+        return userRepository.save(entity);
     }
 
     private void savePhones(List<Phone> phones, UserJPA user) {
